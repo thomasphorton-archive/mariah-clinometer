@@ -1,0 +1,17 @@
+{
+  "name": "mariah-clinometer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mcp-spi-adc": "^2.0.3",
+    "mqtt": "^2.18.8",
+    "request": "^2.88.0",
+    "rpi-gpio": "git://github.com/JamesBarwell/rpi-gpio.js.git#v2"
+  }
+}
