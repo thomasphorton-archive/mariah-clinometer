@@ -9,7 +9,13 @@ const channels = {
   z: 2
 }
 
-const interval = 1000;
+const calibrationData = require('./calibration-data');
+
+client.on('connect', () => {
+  console.log('MQTT Client Connected');
+});
+
+const interval = 100;
 
 var xSensor, ySensor, zSensor;
 
@@ -19,6 +25,7 @@ Promise.all([
   mcpadc.willOpen(2, {})
 ])
   .then(values => {
+    console.log(values);
     xSensor = values[0];
     ySensor = values[1];
     zSensor = values[2];
@@ -36,6 +43,9 @@ Promise.all([
         });
     }, interval);
     
+  })
+  .catch(err => {
+    console.log(err);
   });
 
 function willReadSensors() {
@@ -48,9 +58,9 @@ function willReadSensors() {
   ])
     .then(values => {
       reading = {
-        x: translateVoltage(values[0].value),
-        y: translateVoltage(values[1].value),
-        z: translateVoltage(values[2].value)
+        x: parseInt(translateVoltage(values[0].value, calibrationData.x, true)),
+        y: parseInt(translateVoltage(values[1].value, calibrationData.y)),
+        z: parseInt(translateVoltage(values[2].value, calibrationData.z))
       };
 
       return (reading);
@@ -60,16 +70,34 @@ function willReadSensors() {
 Math.degrees = function(radians) {
   return radians * 180 / Math.PI
 }
-// arcos for z
-function translateVoltage(input) {
+
+function translateVoltage(input, calibration, debug) {
+  let offset = (calibration.max + calibration.min) / 2;
+  let spread = 0.98 / (calibration.max - offset);
+
+  if (debug) {
+    console.log(offset, 0.51);
+    console.log(spread, 10);
+  }
+
+  let newInput = (input - offset) * spread;
   let normalizedInput = (input - 0.51) * 10;
+
   if (normalizedInput > 1) {
     normalizedInput = 1;
   } else if (normalizedInput < -1) {
     normalizedInput = -1;
   }
 
+  if (newInput > 1) newInput = 1
+  if (newInput < -1) newInput = -1 
+
+  if (debug) {
+    console.log(`compareinputs: new: ${newInput}, old: ${normalizedInput}`);
+  }
+
   let output = Math.degrees(Math.asin(normalizedInput));
+  // let output = Math.degrees(Math.asin(newInput));
   return output;
 }
 
